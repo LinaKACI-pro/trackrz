@@ -1,0 +1,33 @@
+# macOS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / frontend tooling
+node_modules/
+coverage/
+dist/
+build/
+
+# Rust / WASM experiments
+target/
+
+# Local runtime secrets and transient data
+.env
+.env.*
+data/password.txt
+data/*.json
+data/*.tmp
+data/*.local.json
+
+# Logs
+*.log

@@ -1,0 +1,68 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hetzner
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Test and deploy
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/trackerz' }}
+      SSH_PORT: ${{ vars.HETZNER_PORT || '22' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+
+      - name: Run JavaScript tests
+        run: node --test tests/*.test.mjs
+
+      - name: Run Python tests
+        run: python3 -m unittest tests/test_server.py
+
+      - name: Validate deployment configuration
+        run: |
+          test -n "${{ secrets.HETZNER_HOST }}" || (echo "Missing secret: HETZNER_HOST" && exit 1)
+          test -n "${{ secrets.HETZNER_USER }}" || (echo "Missing secret: HETZNER_USER" && exit 1)
+          test -n "${{ secrets.HETZNER_SSH_KEY }}" || (echo "Missing secret: HETZNER_SSH_KEY" && exit 1)
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" "${{ secrets.HETZNER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Prepare remote directory
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "mkdir -p '$DEPLOY_PATH'"
+
+      - name: Sync application files
+        run: |
+          rsync -az --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '.idea/' \
+            --exclude '__pycache__/' \
+            --exclude '.pytest_cache/' \
+            --exclude 'data/' \
+            --exclude '*.pyc' \
+            -e "ssh -i ~/.ssh/deploy_key -p $SSH_PORT" \
+            ./ "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}:$DEPLOY_PATH/"
+
+      - name: Restart service
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "if command -v sudo >/dev/null 2>&1; then sudo systemctl restart muscu; else systemctl restart muscu; fi"
