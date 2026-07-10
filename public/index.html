@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Muscu Tracker</title>
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Muscu">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="logo"><span class="dot"></span> Muscu Tracker</div>
+    <div class="header-right">
+      <button type="button" class="file-pill" id="sync-pill" aria-label="État de la synchronisation"></button>
+      <button type="button" class="logout-pill hide" id="logout-btn">Déconnexion</button>
+      <nav class="topnav" aria-label="Navigation principale" role="tablist">
+        <button type="button" role="tab" aria-controls="tab-session" aria-selected="true" data-tab="session" class="active">Séance</button>
+        <button type="button" role="tab" aria-controls="tab-dashboard" aria-selected="false" data-tab="dashboard">Progression</button>
+        <button type="button" role="tab" aria-controls="tab-exos" aria-selected="false" data-tab="exos">Mes exos</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation mobile : barre d'onglets en bas, à portée de pouce -->
+<nav class="tabbar" aria-label="Navigation principale" role="tablist">
+  <button type="button" role="tab" aria-controls="tab-session" aria-selected="true" data-tab="session" class="active"><span class="ico" aria-hidden="true">🏋️</span>Séance</button>
+  <button type="button" role="tab" aria-controls="tab-dashboard" aria-selected="false" data-tab="dashboard"><span class="ico" aria-hidden="true">📈</span>Progression</button>
+  <button type="button" role="tab" aria-controls="tab-exos" aria-selected="false" data-tab="exos"><span class="ico" aria-hidden="true">📋</span>Mes exos</button>
+</nav>
+
+<div class="container">
+
+  <!-- ============ SÉANCE ============ -->
+  <section id="tab-session" role="tabpanel" aria-label="Séance">
+
+    <!-- Vue 1 : sélection -->
+    <div id="view-select">
+      <h1>Nouvelle séance</h1>
+      <p class="sub" id="session-date-label"></p>
+
+      <div class="resume hide" id="resume-banner"></div>
+
+      <div class="card hide" id="quick-card">
+        <h2>Reprendre une séance type</h2>
+        <div id="quick-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="flex-between" style="margin-bottom:14px">
+          <h2 style="margin:0">Ou choisis tes exos</h2>
+          <label class="sr-only" for="session-date">Date de la séance</label>
+          <input type="date" id="session-date" style="width:auto">
+        </div>
+        <div class="ex-grid" id="picker"></div>
+      </div>
+
+      <div class="start-bar hide" id="start-bar">
+        <button class="btn big" id="start-workout">Commencer la séance</button>
+      </div>
+    </div>
+
+    <!-- Vue 2 : séance guidée -->
+    <div id="view-workout" class="hide">
+      <div class="wk-top">
+        <button type="button" class="ghost btn small" id="wk-quit" aria-label="Abandonner la séance">✕</button>
+        <div class="wk-progress" role="progressbar" aria-label="Progression de la séance" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><div id="wk-bar"></div></div>
+        <span id="wk-count"></span>
+        <select class="mini" id="rest-dur" aria-label="Durée du repos">
+          <option value="0">⏱ off</option>
+          <option value="60">⏱ 60s</option>
+          <option value="90">⏱ 90s</option>
+          <option value="120">⏱ 2min</option>
+          <option value="180">⏱ 3min</option>
+        </select>
+      </div>
+
+      <div class="rest hide" id="rest-banner" aria-live="polite">
+        ⏱ Repos <b id="rest-time">0:00</b>
+        <span style="flex:1"></span>
+        <button class="ghost btn small" id="rest-skip">Passer</button>
+      </div>
+
+      <div class="exo-nav" id="wk-exo-nav"></div>
+
+      <div class="card wk-card">
+        <span class="pill" id="wk-group"></span>
+        <h2 id="wk-exo-name"></h2>
+        <div class="wk-sets" id="wk-done"></div>
+        <div class="wk-set-label" id="wk-set-label"></div>
+        <div class="steppers">
+          <div class="stepper">
+            <button id="reps-minus" aria-label="moins une rep">−</button>
+            <div class="val"><input id="wk-reps" aria-label="Nombre de répétitions" type="number" inputmode="numeric" min="0" placeholder="0"><span class="unit">reps</span></div>
+            <button id="reps-plus" aria-label="plus une rep">＋</button>
+          </div>
+          <div class="stepper" id="wk-weight-st">
+            <button id="w-minus" aria-label="moins 2.5 kg">−</button>
+            <div class="val"><input id="wk-weight" aria-label="Poids en kilogrammes" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0"><span class="unit">kg</span></div>
+            <button id="w-plus" aria-label="plus 2.5 kg">＋</button>
+          </div>
+        </div>
+        <button class="btn big" id="wk-validate">Valider la série ✓</button>
+        <div class="wk-actions">
+          <button class="ghost btn" id="wk-add-set">＋ série</button>
+          <button class="ghost btn" id="wk-skip">Exo suivant →</button>
+        </div>
+      </div>
+
+      <div class="wk-actions">
+        <button class="ghost btn" id="wk-add-exo">＋ Ajouter un exo</button>
+        <button class="ghost btn" id="wk-finish">Terminer ✓</button>
+      </div>
+    </div>
+
+    <!-- Vue 3 : résumé -->
+    <div id="view-summary" class="hide">
+      <h1>Belle séance 💪</h1>
+      <p class="sub">Vérifie et enregistre.</p>
+      <div class="stat-grid" id="sum-kpis"></div>
+      <div class="card" id="sum-list"></div>
+      <div class="card">
+        <label for="sum-date">Date de la séance</label>
+        <input type="date" id="sum-date">
+      </div>
+      <button class="btn big" id="sum-save">Enregistrer la séance ✓</button>
+      <div class="wk-actions" style="margin-top:10px">
+        <button class="ghost btn" id="sum-back">↩ Continuer la séance</button>
+        <button class="ghost btn" id="sum-abandon">Ne pas enregistrer</button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="tab-dashboard" class="hide" role="tabpanel" aria-label="Progression">
+    <h1>Progression</h1>
+    <p class="sub">Ton évolution séance après séance.</p>
+
+    <div class="stat-grid" id="kpis"></div>
+
+    <div class="card">
+      <div class="flex-between" style="margin-bottom:16px">
+        <h2 style="margin:0">Évolution par exo</h2>
+        <div style="display:flex; gap:8px; align-items:center">
+          <select class="mini" id="chart-ex" aria-label="Exercice du graphique"></select>
+          <select class="mini" id="chart-metric" aria-label="Métrique du graphique">
+            <option value="maxWeight">Poids max</option>
+            <option value="volume">Volume total</option>
+            <option value="est1rm">1RM estimé</option>
+          </select>
+        </div>
+      </div>
+      <div class="chart-wrap"><div id="chart"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between" style="margin-bottom:16px">
+        <h2 style="margin:0">Tous les exos</h2>
+        <div style="display:flex; gap:8px; align-items:center">
+          <select class="mini" id="multi-metric" aria-label="Métrique de comparaison">
+            <option value="maxWeight">Poids max</option>
+            <option value="est1rm">1RM estimé</option>
+            <option value="volume">Volume</option>
+          </select>
+          <select class="mini" id="multi-mode" aria-label="Mode de comparaison">
+            <option value="abs">Valeur absolue</option>
+            <option value="base100" selected>Progression (base 100)</option>
+          </select>
+        </div>
+      </div>
+      <div class="chart-wrap"><div id="multi-chart"></div></div>
+      <p class="chart-hint">Active ou masque les exercices depuis la légende.</p>
+      <div id="multi-legend" class="legend"></div>
+    </div>
+
+    <div class="card">
+      <h2>Records personnels</h2>
+      <div id="prs"></div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between" style="margin-bottom:6px">
+        <h2 style="margin:0">Historique</h2>
+        <button class="ghost small" id="export-btn">Exporter (JSON)</button>
+      </div>
+      <div id="history"></div>
+    </div>
+  </section>
+
+  <!-- ============ EXOS ============ -->
+  <section id="tab-exos" class="hide" role="tabpanel" aria-label="Mes exercices">
+    <h1>Mes exercices</h1>
+    <p class="sub">Gère ta bibliothèque d'exercices.</p>
+
+    <div class="card">
+      <h2>Ajouter un exercice</h2>
+      <div class="row" style="align-items:flex-end">
+        <div style="flex:2">
+          <label for="new-ex-name">Nom de l'exo</label>
+          <input type="text" id="new-ex-name" placeholder="ex. Développé couché">
+        </div>
+        <div style="flex:1.3">
+          <label for="new-ex-group">Groupe musculaire</label>
+          <select id="new-ex-group">
+            <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
+            <option>Biceps</option><option>Triceps</option><option>Jambes</option>
+            <option>Fessiers</option><option>Abdos</option><option>Mollets</option><option>Autre</option>
+          </select>
+        </div>
+        <div style="flex:1.2">
+          <label for="new-ex-type">Type</label>
+          <select id="new-ex-type">
+            <option value="charge">Charge (kg)</option>
+            <option value="pdc">Poids du corps</option>
+            <option value="assistance">Machine assistée (kg d'aide)</option>
+          </select>
+        </div>
+        <button class="btn" id="add-ex" style="flex:0 0 auto">Ajouter</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between" style="margin-bottom:14px">
+        <h2 style="margin:0">Bibliothèque</h2>
+        <label class="sr-only" for="ex-search">Rechercher un exercice</label>
+        <input type="search" id="ex-search" placeholder="Rechercher…" style="width:min(100%,260px)">
+      </div>
+      <div id="ex-list"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Connexion (si le serveur exige un mot de passe) -->
+<div class="login hide" id="login" role="dialog" aria-modal="true" aria-labelledby="login-title">
+  <div class="login-card">
+    <div style="font-size:38px;margin-bottom:10px">🔒</div>
+    <h2 id="login-title" style="margin-bottom:6px">Muscu Tracker</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:18px">Entre ton mot de passe pour accéder à tes données.</p>
+    <label class="sr-only" for="login-pw">Mot de passe</label>
+    <input type="password" id="login-pw" placeholder="Mot de passe" autocomplete="current-password" style="margin-bottom:12px">
+    <button class="btn big" id="login-go">Se connecter</button>
+    <p id="login-err" class="hide" role="alert" style="color:var(--accent);font-size:13px;margin-top:12px">Mot de passe incorrect.</p>
+  </div>
+</div>
+
+<div class="sheet hide" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="sheet-inner">
+    <div class="flex-between" style="margin-bottom:14px">
+      <h2 id="sheet-title" style="margin:0">Ajouter un exo</h2>
+      <button class="ghost btn small" id="sheet-close">Fermer</button>
+    </div>
+    <div class="ex-grid" id="sheet-grid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

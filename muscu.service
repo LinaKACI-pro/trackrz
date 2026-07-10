@@ -1,0 +1,29 @@
+[Unit]
+Description=Muscu Tracker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# ⚠️ Adapte User et les chemins si ton utilisateur/dossier diffèrent
+User=pi
+WorkingDirectory=/home/pi/trackerz
+ExecStart=/usr/bin/python3 /home/pi/trackerz/server.py
+Environment=PORT=8000
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/pi/trackerz/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
