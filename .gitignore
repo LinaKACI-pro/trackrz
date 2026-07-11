@@ -31,3 +31,4 @@ data/*.local.json
 
 # Logs
 *.log
+*.md
