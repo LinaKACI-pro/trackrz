@@ -18,6 +18,7 @@ jobs:
       DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/trackerz' }}
       SSH_PORT: ${{ vars.HETZNER_PORT || '22' }}
       ZIG_TARGET: ${{ vars.ZIG_TARGET || 'x86_64-linux-musl' }}
+      APP_PASSWORD: ${{ secrets.MUSCU_PASSWORD || vars.MUSCU_PASSWORD || '' }}
 
     steps:
       - name: Checkout
@@ -86,13 +87,27 @@ jobs:
             'ExecStart=' \
             "ExecStart=$DEPLOY_PATH/trackrz-server" \
             "WorkingDirectory=$DEPLOY_PATH" \
+            'Environment=' \
             'Environment=HOST=127.0.0.1' \
             'Environment=PORT=8000' \
+            'UnsetEnvironment=MUSCU_PASSWORD' \
             'ReadWritePaths=' \
             "ReadWritePaths=$DEPLOY_PATH/data" \
             | ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "sudo tee /etc/systemd/system/muscu.service.d/zig.conf >/dev/null"
           ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "sudo systemctl daemon-reload"
 
+      - name: Configure application password
+        if: env.APP_PASSWORD != ''
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "APP_USER=\$(systemctl show -p User --value muscu); test -n \"\$APP_USER\" || APP_USER=root; APP_GROUP=\$(id -gn \"\$APP_USER\"); sudo install -d -m 700 -o \"\$APP_USER\" -g \"\$APP_GROUP\" '$DEPLOY_PATH/data'"
+          printf '%s' "$APP_PASSWORD" | ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "sudo tee '$DEPLOY_PATH/data/password.txt' >/dev/null"
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "APP_USER=\$(systemctl show -p User --value muscu); test -n \"\$APP_USER\" || APP_USER=root; APP_GROUP=\$(id -gn \"\$APP_USER\"); sudo chown \"\$APP_USER:\$APP_GROUP\" '$DEPLOY_PATH/data/password.txt'; sudo chmod 600 '$DEPLOY_PATH/data/password.txt'"
+
       - name: Restart service
         run: |
           ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "if command -v sudo >/dev/null 2>&1; then sudo systemctl restart muscu; else systemctl restart muscu; fi"
+
+      - name: Verify Zig backend is active
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "systemctl show -p ExecStart --value muscu | grep -F '$DEPLOY_PATH/trackrz-server'"
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "pgrep -af '$DEPLOY_PATH/trackrz-server'"

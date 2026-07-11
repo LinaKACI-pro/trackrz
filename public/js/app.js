@@ -35,7 +35,7 @@ setStatusListener(state => {
 $("#sync-pill").addEventListener("click", () => retrySync());
 
 async function submitLogin() {
-  const pw = $("#login-pw").value;
+  const pw = $("#login-pw").value.trim();
   if (!pw) return;
   setPassword(pw);
   $("#logout-btn").classList.remove("hide");
