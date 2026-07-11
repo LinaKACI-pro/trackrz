@@ -14,9 +14,11 @@ htmlcov/
 
 # Node / frontend tooling
 node_modules/
+.bench-tools/
 coverage/
 dist/
 build/
+/trackrz-server
 
 # Rust / WASM experiments
 target/
@@ -31,4 +33,4 @@ data/*.local.json
 
 # Logs
 *.log
-*.md
+

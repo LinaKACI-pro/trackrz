@@ -4,7 +4,7 @@ import os
 import tempfile
 import unittest
 
-import server
+from backup import server
 
 
 def document(session_ids=()):

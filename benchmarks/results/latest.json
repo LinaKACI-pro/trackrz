@@ -1,0 +1,48 @@
+{
+  "date": "2026-07-11",
+  "environment": {
+    "machine": "macOS arm64 local",
+    "node": "v26.3.1",
+    "rust": "rustc 1.97.0",
+    "dioxus": "0.7.0",
+    "dioxus_cli": "0.7.0",
+    "playwright_chromium": "149.0.7827.55"
+  },
+  "methodology": {
+    "size": "Sum of first-load app shell files. Current JS includes public/index.html, CSS, JS modules, manifest and service worker. Dioxus includes generated benchmarks/dioxus/dist/public files excluding precompressed .br/.gz duplicates.",
+    "performance": "Playwright Chromium median of 5 measured runs after 2 warmups. readyMs waits for the exercise picker chips to exist in the DOM.",
+    "fixture": "Current JS is served with /api/data stubbed from benchmarks/data/sample-data.json. Dioxus uses equivalent static in-code data."
+  },
+  "results": {
+    "current_js": {
+      "size": {
+        "raw_bytes": 80692,
+        "gzip_bytes": 25400,
+        "brotli_bytes": 22323
+      },
+      "performance": {
+        "ready_ms": 37.8,
+        "load_ms": 20.2,
+        "dom_content_loaded_ms": 20.1,
+        "dom_nodes": 218
+      }
+    },
+    "dioxus_rust_wasm": {
+      "size": {
+        "raw_bytes": 476346,
+        "gzip_bytes": 188199,
+        "brotli_bytes": 152270
+      },
+      "performance": {
+        "ready_ms": 31.7,
+        "load_ms": 4.9,
+        "dom_content_loaded_ms": 4.0,
+        "dom_nodes": 102
+      }
+    }
+  },
+  "interpretation": {
+    "size": "The Dioxus/WASM benchmark is about 5.9x larger raw, 7.4x larger gzip and 6.8x larger brotli than the current JS frontend shell.",
+    "performance": "On this small fixture, Dioxus reaches the benchmark-ready UI slightly faster, but it also renders a simpler DOM and ships much more code. Treat this as a local overhead comparison, not proof that a full rewrite would be faster."
+  }
+}

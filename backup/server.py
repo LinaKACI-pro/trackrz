@@ -21,7 +21,7 @@ import datetime, hmac, json, math, os, re, shutil, tempfile, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-ROOT     = os.path.dirname(os.path.abspath(__file__))
+ROOT     = os.environ.get("TRACKRZ_ROOT", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PUBLIC   = os.path.join(ROOT, "public")
 DATA_DIR = os.path.join(ROOT, "data")
 DATA     = os.path.join(DATA_DIR, "muscu-data.json")

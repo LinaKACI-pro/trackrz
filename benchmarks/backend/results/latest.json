@@ -1,0 +1,61 @@
+{
+  "date": "2026-07-11T14:12:37.382Z",
+  "methodology": {
+    "runs": 80,
+    "putRuns": 20,
+    "rebuildZig": false,
+    "note": "Each backend runs in its own temporary working directory with the same public/ assets and sample data file."
+  },
+  "size": {
+    "pythonServerPyBytes": 14633,
+    "zigBinaryBytes": 196432
+  },
+  "python": {
+    "readyMs": 61.15,
+    "firstApiGetMs": 1.281,
+    "idleRssKb": 25616,
+    "afterBenchRssKb": 26032,
+    "apiGet": {
+      "minMs": 0.352,
+      "medianMs": 0.455,
+      "p95Ms": 0.879,
+      "avgMs": 0.502
+    },
+    "staticGet": {
+      "minMs": 0.295,
+      "medianMs": 0.357,
+      "p95Ms": 0.521,
+      "avgMs": 0.373
+    },
+    "apiPut": {
+      "minMs": 0.998,
+      "medianMs": 1.242,
+      "p95Ms": 2.92,
+      "avgMs": 1.289
+    }
+  },
+  "zig": {
+    "readyMs": 26.871,
+    "firstApiGetMs": 0.347,
+    "idleRssKb": 1520,
+    "afterBenchRssKb": 1568,
+    "apiGet": {
+      "minMs": 0.224,
+      "medianMs": 0.272,
+      "p95Ms": 0.373,
+      "avgMs": 0.287
+    },
+    "staticGet": {
+      "minMs": 0.201,
+      "medianMs": 0.242,
+      "p95Ms": 0.342,
+      "avgMs": 0.264
+    },
+    "apiPut": {
+      "minMs": 0.415,
+      "medianMs": 0.479,
+      "p95Ms": 0.887,
+      "avgMs": 0.515
+    }
+  }
+}

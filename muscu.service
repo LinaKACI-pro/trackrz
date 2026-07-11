@@ -5,10 +5,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-# ⚠️ Adapte User et les chemins si ton utilisateur/dossier diffèrent
-User=pi
-WorkingDirectory=/home/pi/trackerz
-ExecStart=/usr/bin/python3 /home/pi/trackerz/server.py
+User=trackerz
+WorkingDirectory=/opt/trackerz
+ExecStart=/opt/trackerz/trackrz-server
+Environment=HOST=127.0.0.1
 Environment=PORT=8000
 UMask=0077
 NoNewPrivileges=true
@@ -16,7 +16,7 @@ PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/home/pi/trackerz/data
+ReadWritePaths=/opt/trackerz/data
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

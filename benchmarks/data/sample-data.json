@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "revision": 7,
+  "exercises": [
+    { "id": "bench", "name": "Développé couché", "group": "Pectoraux", "type": "charge" },
+    { "id": "squat", "name": "Squat", "group": "Jambes", "type": "charge" },
+    { "id": "row", "name": "Rowing barre", "group": "Dos", "type": "charge" },
+    { "id": "pullups", "name": "Tractions", "group": "Dos", "type": "pdc" },
+    { "id": "dips", "name": "Dips", "group": "Triceps", "type": "pdc" },
+    { "id": "press", "name": "Développé militaire", "group": "Épaules", "type": "charge" }
+  ],
+  "sessions": [
+    {
+      "id": "s1",
+      "date": "2026-06-20",
+      "exos": [
+        { "exoId": "bench", "sets": [{ "reps": 8, "weight": 72.5 }, { "reps": 7, "weight": 72.5 }, { "reps": 8, "weight": 70 }] },
+        { "exoId": "row", "sets": [{ "reps": 10, "weight": 62.5 }, { "reps": 10, "weight": 62.5 }, { "reps": 9, "weight": 62.5 }] },
+        { "exoId": "dips", "sets": [{ "reps": 12, "weight": 0 }, { "reps": 10, "weight": 0 }] }
+      ]
+    },
+    {
+      "id": "s2",
+      "date": "2026-06-25",
+      "exos": [
+        { "exoId": "squat", "sets": [{ "reps": 8, "weight": 95 }, { "reps": 8, "weight": 95 }, { "reps": 6, "weight": 100 }] },
+        { "exoId": "pullups", "sets": [{ "reps": 8, "weight": 0 }, { "reps": 7, "weight": 0 }, { "reps": 6, "weight": 0 }] },
+        { "exoId": "press", "sets": [{ "reps": 8, "weight": 42.5 }, { "reps": 7, "weight": 42.5 }] }
+      ]
+    },
+    {
+      "id": "s3",
+      "date": "2026-07-02",
+      "exos": [
+        { "exoId": "bench", "sets": [{ "reps": 8, "weight": 75 }, { "reps": 7, "weight": 75 }, { "reps": 6, "weight": 75 }] },
+        { "exoId": "row", "sets": [{ "reps": 10, "weight": 65 }, { "reps": 10, "weight": 65 }, { "reps": 8, "weight": 67.5 }] },
+        { "exoId": "dips", "sets": [{ "reps": 13, "weight": 0 }, { "reps": 11, "weight": 0 }] }
+      ]
+    },
+    {
+      "id": "s4",
+      "date": "2026-07-08",
+      "exos": [
+        { "exoId": "squat", "sets": [{ "reps": 8, "weight": 100 }, { "reps": 7, "weight": 102.5 }, { "reps": 6, "weight": 102.5 }] },
+        { "exoId": "pullups", "sets": [{ "reps": 9, "weight": 0 }, { "reps": 8, "weight": 0 }, { "reps": 7, "weight": 0 }] },
+        { "exoId": "press", "sets": [{ "reps": 8, "weight": 45 }, { "reps": 7, "weight": 45 }, { "reps": 6, "weight": 45 }] }
+      ]
+    }
+  ]
+}

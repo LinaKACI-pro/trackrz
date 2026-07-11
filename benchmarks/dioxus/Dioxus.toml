@@ -1,0 +1,11 @@
+[application]
+name = "trackrz-dioxus-bench"
+asset_dir = "assets"
+out_dir = "dist"
+
+[web.app]
+title = "Trackrz Dioxus Bench"
+
+[web.watcher]
+reload_html = true
+watch_path = ["src", "assets"]

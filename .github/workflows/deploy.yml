@@ -17,6 +17,7 @@ jobs:
     env:
       DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/trackerz' }}
       SSH_PORT: ${{ vars.HETZNER_PORT || '22' }}
+      ZIG_TARGET: ${{ vars.ZIG_TARGET || 'x86_64-linux-musl' }}
 
     steps:
       - name: Checkout
@@ -27,11 +28,19 @@ jobs:
         with:
           node-version: 26
 
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.14.1
+
       - name: Run JavaScript tests
         run: node --test tests/*.test.mjs
 
-      - name: Run Python tests
-        run: python3 -m unittest tests/test_server.py
+      - name: Run Zig tests
+        run: zig test backend/src/document.zig -O ReleaseSafe
+
+      - name: Build Zig backend
+        run: zig build-exe backend/src/main.zig -target "$ZIG_TARGET" -O ReleaseSafe -fstrip -femit-bin=trackrz-server
 
       - name: Validate deployment configuration
         run: |
@@ -58,10 +67,31 @@ jobs:
             --exclude '.idea/' \
             --exclude '__pycache__/' \
             --exclude '.pytest_cache/' \
+            --exclude 'backup/' \
+            --exclude 'benchmarks/' \
             --exclude 'data/' \
             --exclude '*.pyc' \
             -e "ssh -i ~/.ssh/deploy_key -p $SSH_PORT" \
             ./ "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}:$DEPLOY_PATH/"
+
+      - name: Make backend executable
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "chmod 755 '$DEPLOY_PATH/trackrz-server'"
+
+      - name: Configure Zig systemd service
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "sudo mkdir -p /etc/systemd/system/muscu.service.d"
+          printf '%s\n' \
+            '[Service]' \
+            'ExecStart=' \
+            "ExecStart=$DEPLOY_PATH/trackrz-server" \
+            "WorkingDirectory=$DEPLOY_PATH" \
+            'Environment=HOST=127.0.0.1' \
+            'Environment=PORT=8000' \
+            'ReadWritePaths=' \
+            "ReadWritePaths=$DEPLOY_PATH/data" \
+            | ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "sudo tee /etc/systemd/system/muscu.service.d/zig.conf >/dev/null"
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" "sudo systemctl daemon-reload"
 
       - name: Restart service
         run: |
