@@ -44,8 +44,7 @@
 
     <!-- Vue 1 : sélection -->
     <div id="view-select">
-      <h1>Nouvelle séance</h1>
-      <p class="sub" id="session-date-label"></p>
+      <h1 class="session-title">Nouvelle séance</h1>
 
       <div class="resume hide" id="resume-banner"></div>
 
@@ -54,14 +53,7 @@
         <div id="quick-list"></div>
       </div>
 
-      <div class="card">
-        <div class="flex-between" style="margin-bottom:14px">
-          <h2 style="margin:0">Ou choisis tes exos</h2>
-          <label class="sr-only" for="session-date">Date de la séance</label>
-          <input type="date" id="session-date" style="width:auto">
-        </div>
-        <div class="ex-grid" id="picker"></div>
-      </div>
+      <div class="ex-grid" id="picker"></div>
 
       <div class="start-bar hide" id="start-bar">
         <button class="btn big" id="start-workout">Commencer la séance</button>
@@ -96,6 +88,7 @@
       <div class="card wk-card">
         <span class="pill" id="wk-group"></span>
         <h2 id="wk-exo-name"></h2>
+        <div class="wk-last hide" id="wk-last"></div>
         <div class="wk-sets" id="wk-done"></div>
         <div class="wk-set-label" id="wk-set-label"></div>
         <div class="steppers">

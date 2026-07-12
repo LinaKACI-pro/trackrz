@@ -92,8 +92,10 @@
   .wk-progress { flex: 1; height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
   #wk-bar { height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .3s; }
   #wk-count { font-size: 12px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .session-title { margin-bottom: 16px; }
   .wk-card { text-align: center; padding: 24px 18px 20px; }
-  #wk-exo-name { font-size: 24px; margin: 8px 0 14px; }
+  #wk-exo-name { font-size: 24px; margin: 8px 0 6px; }
+  .wk-last { font-size: 12px; color: var(--muted); margin: 0 0 14px; font-variant-numeric: tabular-nums; }
   .wk-sets { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 14px; }
   .set-chip { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); border-radius: 99px; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
   .set-chip.ok { color: var(--green); border-color: #36d39955; }

@@ -10,6 +10,25 @@ let workout = null;         // séance en cours { date, exos:[{exoId, sets:[{rep
 const DRAFT_KEY = "muscu_draft";
 let restTimer = null;
 
+// Garde l'écran allumé pendant la séance (repos entre les séries).
+let wakeLock = null;
+async function acquireWakeLock() {
+  if (wakeLock || !navigator.wakeLock) return;
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => { wakeLock = null; });
+  } catch (_) { wakeLock = null; }
+}
+function releaseWakeLock() {
+  try { wakeLock?.release(); } catch (_) {}
+  wakeLock = null;
+}
+function inWorkout() { return !$("#view-workout").classList.contains("hide"); }
+// Le verrou saute quand l'onglet passe en arrière-plan : on le reprend au retour.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && inWorkout()) acquireWakeLock();
+});
+
 const GROUPS = ["Pectoraux", "Dos", "Épaules", "Biceps", "Triceps", "Jambes", "Fessiers", "Abdos", "Mollets", "Autre"];
 const TYPES = [
   ["charge", "Charge (kg)"],
@@ -27,6 +46,7 @@ function loadDraft() {
 
 function showView(v) {
   ["select", "workout", "summary"].forEach(x => $("#view-" + x).classList.toggle("hide", x !== v));
+  if (v === "workout") acquireWakeLock(); else releaseWakeLock();
   if (v === "select") { renderQuickStart(); renderResume(); renderPicker(); }
   if (v === "workout") renderWorkout();
   if (v === "summary") renderSummary();
@@ -145,10 +165,25 @@ function prefillSets(exoId) {
   return [{ reps: "", weight: "", done: false }];
 }
 
+const shortDate = iso => new Date(iso + "T00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+
+// Rappel de la dernière séance où l'exo a été fait (pour situer sa progression)
+function lastTime(exoId, type) {
+  for (let i = db.sessions.length - 1; i >= 0; i--) {
+    const s = db.sessions[i];
+    const ex = s.exos.find(x => x.exoId === exoId);
+    if (ex && ex.sets.length) {
+      const text = ex.sets.map(t => type === "pdc" ? `${t.reps}` : `${t.reps}×${t.weight}`).join(", ");
+      return `Dernière fois · ${shortDate(s.date)} : ${text}`;
+    }
+  }
+  return null;
+}
+
 function startWorkout() {
   if (!selected.size) return;
   workout = {
-    date: $("#session-date").value || todayISO(),
+    date: todayISO(),
     exos: [...selected].map(id => ({ exoId: id, sets: prefillSets(id) })),
     cur: { e: 0, s: 0 },
     restEnd: 0
@@ -189,6 +224,9 @@ function renderWorkout() {
 
   $("#wk-group").textContent = exo.group;
   $("#wk-exo-name").textContent = exo.name;
+  const last = lastTime(ex.exoId, exo.type);
+  $("#wk-last").textContent = last || "";
+  $("#wk-last").classList.toggle("hide", !last);
   $("#wk-set-label").textContent = `Série ${s + 1} sur ${ex.sets.length}`;
 
   // chips des séries (tape une série validée pour la corriger)
@@ -236,10 +274,29 @@ function stepInput(sel, delta) {
   el.value = Math.max(0, Math.round(((+el.value || 0) + delta) * 10) / 10);
   syncCur();
 }
-$("#reps-minus").onclick = () => stepInput("#wk-reps", -1);
-$("#reps-plus").onclick = () => stepInput("#wk-reps", +1);
-$("#w-minus").onclick = () => stepInput("#wk-weight", -2.5);
-$("#w-plus").onclick = () => stepInput("#wk-weight", +2.5);
+
+// Appui maintenu = répétition qui accélère ; le clic clavier (Entrée/Espace) reste géré.
+function holdRepeat(el, step) {
+  let slowTimer, fastTimer, viaPointer = false;
+  const stop = () => { clearTimeout(slowTimer); clearInterval(fastTimer); };
+  el.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    viaPointer = true;
+    step();
+    let delay = 120;
+    slowTimer = setTimeout(function run() {
+      step();
+      delay = Math.max(45, delay - 6);
+      fastTimer = setTimeout(run, delay);
+    }, 420);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => el.addEventListener(ev, stop));
+  el.addEventListener("click", () => { if (viaPointer) { viaPointer = false; return; } step(); });
+}
+holdRepeat($("#reps-minus"), () => stepInput("#wk-reps", -1));
+holdRepeat($("#reps-plus"), () => stepInput("#wk-reps", +1));
+holdRepeat($("#w-minus"), () => stepInput("#wk-weight", -2.5));
+holdRepeat($("#w-plus"), () => stepInput("#wk-weight", +2.5));
 $("#wk-reps").oninput = syncCur;
 $("#wk-weight").oninput = syncCur;
 
@@ -401,5 +458,4 @@ export function initSessionView() {
 }
 
 // état initial des contrôles de l'onglet
-$("#session-date").value = todayISO();
 $("#rest-dur").value = String(restDur());

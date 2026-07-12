@@ -1,7 +1,7 @@
 // Point d'entrée : câblage global (tabs, pill de sync, fix date-picker)
 // puis chargement des données et affichage de la vue Séance.
 
-import { $, $$, fmtDate, todayISO } from "./utils.js";
+import { $, $$ } from "./utils.js";
 import { clearPassword, hasPassword, loadData, retrySync, setStatusListener, setPassword } from "./store.js";
 import { initSessionView } from "./workout.js";
 import { renderDashboard } from "./dashboard.js";
@@ -98,7 +98,6 @@ $$('input[type="date"]').forEach(inp => {
 });
 
 // init
-$("#session-date-label").textContent = "Aujourd'hui : " + fmtDate(todayISO());
 await loadData();
 initSessionView();
 
