@@ -166,6 +166,10 @@ async function pushLoop() {
       const response = await sendDocument(sent, pending.baseRevision);
       if (response.status === 401) { statusListener("auth"); return; }
 
+      // Document refusé par la validation serveur : réessayer ne changera rien,
+      // on garde les données locales et on le signale (≠ hors-ligne).
+      if (response.status === 400 || response.status === 413) { statusListener("rejected"); return; }
+
       if (response.status === 409) {
         const conflict = await response.json();
         const remote = documentFrom(normalize(conflict.data));

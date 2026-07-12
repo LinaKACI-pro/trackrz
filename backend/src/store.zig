@@ -16,27 +16,27 @@ pub const Store = struct {
     active: usize,
     revision: i64,
 
-    pub fn init(self: *Store, scratch: []u8) !void {
+    pub fn init(self: *Store, io: std.Io, scratch: []u8) !void {
         self.lengths = .{ 0, 0 };
         self.active = 0;
         self.revision = 0;
-        try std.fs.cwd().makePath(data_dir);
+        try std.Io.Dir.cwd().createDirPath(io, data_dir);
 
-        if (self.loadPath(current_name, scratch)) |loaded_revision| {
+        if (self.loadPath(io, current_name, scratch)) |loaded_revision| {
             self.revision = loaded_revision;
             return;
         } else |_| {}
 
-        if (self.loadPath(backup_name, scratch)) |loaded_revision| {
+        if (self.loadPath(io, backup_name, scratch)) |loaded_revision| {
             self.revision = loaded_revision;
             std.debug.print("storage: recovered valid backup\n", .{});
             return;
         } else |_| {}
 
-        var directory = try std.fs.cwd().openDir(data_dir, .{});
-        defer directory.close();
-        const has_current = pathExists(directory, current_name);
-        const has_backup = pathExists(directory, backup_name);
+        var directory = try std.Io.Dir.cwd().openDir(io, data_dir, .{});
+        defer directory.close(io);
+        const has_current = pathExists(io, directory, current_name);
+        const has_backup = pathExists(io, directory, backup_name);
         if (has_current or has_backup) return error.DataUnavailable;
 
         @memcpy(self.snapshots[0][0..empty_document.len], empty_document);
@@ -47,61 +47,63 @@ pub const Store = struct {
         return self.snapshots[self.active][0..self.lengths[self.active]];
     }
 
-    pub fn commit(self: *Store, value: std.json.Value, new_revision: i64) !void {
+    pub fn commit(self: *Store, io: std.Io, value: document.Document) !void {
         const next = 1 - self.active;
-        var output = std.io.fixedBufferStream(&self.snapshots[next]);
-        std.json.stringify(value, .{ .whitespace = .indent_2 }, output.writer()) catch |err| switch (err) {
-            error.NoSpaceLeft => return error.DocumentTooLarge,
-            else => return err,
+        var output: std.Io.Writer = .fixed(&self.snapshots[next]);
+        value.serialize(&output) catch |err| switch (err) {
+            error.WriteFailed => return error.DocumentTooLarge,
         };
-        const length = output.pos;
-        try persist(self.snapshots[next][0..length]);
+        const length = output.end;
+        try persist(io, self.snapshots[next][0..length]);
         self.lengths[next] = length;
         self.active = next;
-        self.revision = new_revision;
+        self.revision = value.revision;
     }
 
-    fn loadPath(self: *Store, name: []const u8, scratch: []u8) !i64 {
-        var directory = try std.fs.cwd().openDir(data_dir, .{});
-        defer directory.close();
-        const file = try directory.openFile(name, .{});
-        defer file.close();
-        const size = try file.getEndPos();
+    fn loadPath(self: *Store, io: std.Io, name: []const u8, scratch: []u8) !i64 {
+        var directory = try std.Io.Dir.cwd().openDir(io, data_dir, .{});
+        defer directory.close(io);
+        const file = try directory.openFile(io, name, .{});
+        defer file.close(io);
+        const size = try file.length(io);
         if (size == 0 or size > max_document_size) return error.InvalidData;
-        const length = try file.readAll(&self.snapshots[0]);
+        var reader = file.reader(io, &.{});
+        const length = reader.interface.readSliceShort(&self.snapshots[0]) catch return error.InvalidData;
 
         var fixed = std.heap.FixedBufferAllocator.init(scratch);
-        var parsed = try std.json.parseFromSlice(std.json.Value, fixed.allocator(), self.snapshots[0][0..length], .{});
+        var parsed = try document.parse(fixed.allocator(), self.snapshots[0][0..length]);
         defer parsed.deinit();
-        try document.validate(fixed.allocator(), parsed.value);
         self.lengths[0] = length;
-        return document.revision(parsed.value);
+        return parsed.document.revision;
     }
 };
 
-fn pathExists(directory: std.fs.Dir, name: []const u8) bool {
-    directory.access(name, .{}) catch return false;
+fn pathExists(io: std.Io, directory: std.Io.Dir, name: []const u8) bool {
+    directory.access(io, name, .{}) catch return false;
     return true;
 }
 
-fn persist(bytes: []const u8) !void {
-    var directory = try std.fs.cwd().openDir(data_dir, .{});
-    defer directory.close();
+fn persist(io: std.Io, data: []const u8) !void {
+    var directory = try std.Io.Dir.cwd().openDir(io, data_dir, .{});
+    defer directory.close(io);
 
     {
-        const temporary = try directory.createFile(temporary_name, .{ .truncate = true });
-        defer temporary.close();
-        try temporary.writeAll(bytes);
-        try temporary.sync();
+        const temporary = try directory.createFile(io, temporary_name, .{});
+        defer temporary.close(io);
+        var writer = temporary.writer(io, &.{});
+        try writer.interface.writeAll(data);
+        try writer.interface.flush();
+        try temporary.sync(io);
     }
 
-    if (pathExists(directory, current_name)) {
-        directory.deleteFile(backup_name) catch |err| switch (err) {
+    if (pathExists(io, directory, current_name)) {
+        directory.deleteFile(io, backup_name) catch |err| switch (err) {
             error.FileNotFound => {},
             else => return err,
         };
-        try directory.rename(current_name, backup_name);
+        try directory.rename(current_name, directory, backup_name, io);
     }
-    try directory.rename(temporary_name, current_name);
-    try std.posix.fsync(directory.fd);
+    try directory.rename(temporary_name, directory, current_name, io);
+    const directory_file = std.Io.File{ .handle = directory.handle, .flags = .{ .nonblocking = false } };
+    try directory_file.sync(io);
 }

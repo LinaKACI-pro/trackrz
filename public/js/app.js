@@ -24,10 +24,11 @@ setStatusListener(state => {
     saving: "↻ sauvegarde…",
     offline: "⚠️ hors-ligne",
     conflict: "⚠️ conflit à résoudre",
-    storage: "⚠️ stockage indisponible"
+    storage: "⚠️ stockage indisponible",
+    rejected: "⚠️ données refusées"
   };
   el.textContent = map[state] || "";
-  el.className = "file-pill" + (["offline", "conflict", "storage"].includes(state) ? " warn" : "");
+  el.className = "file-pill" + (["offline", "conflict", "storage", "rejected"].includes(state) ? " warn" : "");
   el.title = ["offline", "conflict"].includes(state) ? "Réessayer la synchronisation" : "";
   el.setAttribute("aria-label", `État de la synchronisation : ${map[state] || state}`);
 });

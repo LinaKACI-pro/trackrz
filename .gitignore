@@ -18,6 +18,7 @@ node_modules/
 coverage/
 dist/
 build/
+.zig-cache/
 /trackrz-server
 
 # Rust / WASM experiments
@@ -33,4 +34,3 @@ data/*.local.json
 
 # Logs
 *.log
-

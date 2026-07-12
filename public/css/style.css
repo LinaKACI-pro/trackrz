@@ -116,6 +116,11 @@
   .exo-nav-chip.ok { color: var(--green); }
   .rest { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; }
   .rest b { font-variant-numeric: tabular-nums; font-size: 18px; color: var(--accent); }
+  .rest-modal { position: fixed; inset: 0; z-index: 85; background: rgba(15,17,21,.74); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .rest-card { width: min(100%, 340px); background: var(--surface); border: 1px solid var(--accent); border-radius: 16px; box-shadow: var(--shadow); padding: 24px; text-align: center; }
+  .rest-card b { display: block; margin: 16px 0 20px; font-variant-numeric: tabular-nums; font-size: 56px; line-height: 1; color: var(--accent); letter-spacing: 0; }
+  .session-empty-create { grid-column: 1 / -1; display: grid; gap: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .session-empty-create .empty { padding: 10px 0 4px; }
   .quick-chip { display: block; width: 100%; text-align: left; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; font: inherit; color: var(--text); }
   .quick-chip:hover, .quick-chip:active { border-color: var(--accent); }
   .quick-chip .q-title { display: block; font-weight: 700; font-size: 15px; margin-bottom: 2px; }

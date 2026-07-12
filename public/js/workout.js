@@ -10,6 +10,13 @@ let workout = null;         // séance en cours { date, exos:[{exoId, sets:[{rep
 const DRAFT_KEY = "muscu_draft";
 let restTimer = null;
 
+const GROUPS = ["Pectoraux", "Dos", "Épaules", "Biceps", "Triceps", "Jambes", "Fessiers", "Abdos", "Mollets", "Autre"];
+const TYPES = [
+  ["charge", "Charge (kg)"],
+  ["pdc", "Poids du corps"],
+  ["assistance", "Machine assistée (kg d'aide)"]
+];
+
 function saveDraft() {
   if (workout) localStorage.setItem(DRAFT_KEY, JSON.stringify(workout));
   else localStorage.removeItem(DRAFT_KEY);
@@ -28,6 +35,31 @@ function showView(v) {
 // --- Vue sélection ---
 export function renderPicker() {
   const p = $("#picker"); p.innerHTML = "";
+  if (!db.exos.length) {
+    p.innerHTML = `
+      <div class="session-empty-create">
+        <div class="empty">Crée ton premier exercice pour démarrer une séance.</div>
+        <div class="row" style="align-items:flex-end">
+          <div style="flex:2">
+            <label for="session-ex-name">Nom de l'exo</label>
+            <input type="text" id="session-ex-name" placeholder="ex. Développé couché">
+          </div>
+          <div>
+            <label for="session-ex-group">Groupe</label>
+            <select id="session-ex-group">${GROUPS.map(group => `<option>${esc(group)}</option>`).join("")}</select>
+          </div>
+          <div>
+            <label for="session-ex-type">Type</label>
+            <select id="session-ex-type">${TYPES.map(([value, label]) => `<option value="${value}">${esc(label)}</option>`).join("")}</select>
+          </div>
+          <button type="button" class="btn" id="session-add-ex" style="flex:0 0 auto">Créer</button>
+        </div>
+      </div>`;
+    $("#session-add-ex").onclick = createExerciseFromSession;
+    $("#session-ex-name").addEventListener("keydown", e => { if (e.key === "Enter") $("#session-add-ex").click(); });
+    $("#start-bar").classList.add("hide");
+    return;
+  }
   const groups = {};
   db.exos.forEach(e => (groups[e.group] = groups[e.group] || []).push(e));
   Object.keys(groups).sort().forEach(g => {
@@ -43,6 +75,25 @@ export function renderPicker() {
   });
   $("#start-bar").classList.toggle("hide", !selected.size);
   $("#start-workout").textContent = `Commencer la séance (${selected.size} exo${selected.size > 1 ? "s" : ""})`;
+}
+
+function createExerciseFromSession() {
+  const name = $("#session-ex-name").value.trim();
+  if (!name) { toast("Donne un nom à l'exo"); return; }
+  if (db.exos.some(e => e.name.localeCompare(name, "fr", { sensitivity: "base" }) === 0)) {
+    toast("Cet exercice existe déjà"); return;
+  }
+  const exercise = {
+    id: uid(),
+    name,
+    group: $("#session-ex-group").value,
+    type: $("#session-ex-type").value
+  };
+  db.exos.push(exercise);
+  selected.add(exercise.id);
+  save();
+  renderPicker();
+  toast("Exo créé ✓");
 }
 
 // Séances types = compositions d'exos déjà faites (dédupliquées, les + récentes d'abord)
@@ -209,6 +260,7 @@ $("#wk-validate").onclick = () => {
 
 $("#wk-add-set").onclick = () => {
   const ex = workout.exos[workout.cur.e];
+  if (ex.sets.length >= 100) { toast("Limite de 100 séries par exo"); return; }
   const last = ex.sets[ex.sets.length - 1] || { reps: "", weight: "" };
   ex.sets.push({ reps: last.reps, weight: last.weight, done: false });
   saveDraft(); renderWorkout();
